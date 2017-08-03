@@ -1,4 +1,8 @@
+import requests
 #-- Response build helpers --
+
+DISTANCE_MATRIX_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?'#origins=Vancouver+BC|Seattle&destinations=San+Francisco|Victoria+BC&mode=bicycling&language=fr-FR&key='#YOUR_API_KEY
+API_KEY = 'AIzaSyCYkKB6Ks1X1LFpZrkIBNDmOSUDN2PPnTM'
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {
@@ -36,7 +40,7 @@ def get_welcome_response():
 
     session_attributes = {}
     card_title = "Welcome to Travel Time"
-    speech_ouput = "Welcome to the Alexa Travel Time skill." \
+    speech_output = "Welcome to the Alexa Travel Time skill." \
                   "You can ask me how long it will take to get to" \
                   "a place from another in the US."
     reprompt_text = "Please tell me an address, city, or location you want to go to."
@@ -58,7 +62,6 @@ def handle_session_end_request():
     return build_response({}, speechlet_response)
 
 def get_travel_time_from_session(intent, session):
-    #pass
     session_attributes = {}
     card_title = "Travel Time"
     reprompt_text = "Please let me know where you want to go, and " \
@@ -67,40 +70,49 @@ def get_travel_time_from_session(intent, session):
                     "one address to another."
     should_end_session = False
 
+    from_location = intent["slots"]["FromCity"]["value"]
+    to_location = intent["slots"]["ToCity"]["value"]
+    commute_time_info_url = DISTANCE_MATRIX_ENDPOINT + "origins=" + from_location + "&destinations=" + to_location + "&key=" + API_KEY
+    response = requests.get(commute_time_info_url)
+
+    commute_time_info = response.json()
+    print('intent slots: ', intent['slots'])
+    output_speech = "It will take " + commute_time_info["rows"][0]["elements"][0]["duration"]["text"] + " to get from " + from_location + " to " + to_location
+
+    return build_response({}, build_speechlet_response(card_title, output_speech, reprompt_text, should_end_session))
 #-- Events --
 
 def on_session_started(session_started_request, session):
-    print "on_session_started requestId={}, sessionId={}" \
-    .format(session_started_request['requestId'], session['sessionId'])
+    print("on_session_started requestId={}, sessionId={}".format(session_started_request['requestId'], session['sessionId']))
 
 def on_launch(launch_request, session):
-    print "on_launch requestId={}, sessionId={}" \
-    .format(launch_request['requestId'], session['sessionId'])
+    print("on_launch requestId={}, sessionId={}".format(launch_request['requestId'], session['sessionId']))
 
     return get_welcome_response()
 
 def on_intent(intent_request, session):
-    print "on_intent requestId={}, sessionId={}" \
-    .format(intent_request['requestId'], sessionId['sessionId'])
+    #print("on_intent requestId={}, sessionId={}".format(intent_request['requestId'], sessionId['sessionId']))
 
     intent = intent_request['intent']
     intent_name = intent['name']
 
     if intent_name == "GetTravelTime":
         return get_travel_time_from_session(intent, session)
+    elif intent_name == "AMAZON.HelpIntent":
+        return get_welcome_response
+    elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
+        return handle_session_end_request()
     else:
         raise ValueError("Invalid intent")
 
 def on_session_ended(session_ended_request, session):
-    print "on_session_ended requestId={}, sessionId={}" \
-    .format(session_ended_request['requestId'], session['sessionId'])
+    print("on_session_ended requestId={}, sessionId={}".format(session_ended_request['requestId'], session['sessionId']))
 
 def lambda_handler(event, context):
     """ Route the incoming request based on type (LaunchRequest, IntentRequest,
     etc.) The JSON body of the request is provided in the event parameter.
     """
-    print "event.session.application.applicationId={}" \
-    .format(event['session']['application']['applicationId'])
+    #print("event.session.application.applicationId={}".format(event['session']['application']['applicationId']))
 
     """
     Uncomment this if statement and populate with your skill's application ID to
