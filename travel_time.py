@@ -1,7 +1,7 @@
 import requests
 #-- Response build helpers --
 
-DISTANCE_MATRIX_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?'#origins=Vancouver+BC|Seattle&destinations=San+Francisco|Victoria+BC&mode=bicycling&language=fr-FR&key='#YOUR_API_KEY
+DISTANCE_MATRIX_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?'
 API_KEY = 'AIzaSyCYkKB6Ks1X1LFpZrkIBNDmOSUDN2PPnTM'
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
